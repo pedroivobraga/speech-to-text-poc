@@ -1,0 +1,28 @@
+{
+  "defaultEngine": "WindowsOnlineDictation",
+  "language": "pt-BR",
+
+  "windowsOffline": {
+    "commands": [
+      "iniciar",
+      "parar",
+      "salvar",
+      "cancelar",
+      "próximo",
+      "anterior",
+      "abrir",
+      "fechar",
+      "sim",
+      "não"
+    ]
+  },
+
+  "whisper": {
+    "ggmlType": "base.en",
+    "language": "en",
+    "chunkSeconds": 5,
+    "modelDirectory": "",
+    "modelFilePath": "",
+    "autoDownloadModel": true
+  }
+}

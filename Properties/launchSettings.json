@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PocStt (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PocStt (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

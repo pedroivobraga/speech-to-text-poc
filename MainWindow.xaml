@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="PocStt.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:media="using:Microsoft.UI.Xaml.Media.Animation"
+    mc:Ignorable="d"
+    Title="PoC — Reconhecimento de Voz">
+
+    <Grid x:Name="RootGrid"
+          Padding="32"
+          RowSpacing="20"
+          Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+        <Grid.Resources>
+            <!-- Cor de destaque para o estado "Ouvindo" (vermelho de gravação). -->
+            <SolidColorBrush x:Key="RecordingBrush" Color="#C42B1C" />
+
+            <!-- Pulsação sutil do indicador "Ouvindo...". Controlada via code-behind. -->
+            <Storyboard x:Key="PulseStoryboard" RepeatBehavior="Forever" AutoReverse="True">
+                <DoubleAnimation
+                    Storyboard.TargetName="ListeningDot"
+                    Storyboard.TargetProperty="Opacity"
+                    From="1.0" To="0.25" Duration="0:0:0.7" />
+            </Storyboard>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ==================== Cabeçalho ==================== -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="Reconhecimento de Voz"
+                       Style="{ThemeResource TitleLargeTextBlockStyle}" />
+            <TextBlock Text="Transcrição contínua em segundo plano — sem o painel nativo do Windows (Win + H)."
+                       Style="{ThemeResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" />
+
+            <!-- Seletor de motor (trocável em runtime; padrão vem do config.json). -->
+            <ComboBox x:Name="EngineSelector"
+                      Header="Motor de reconhecimento"
+                      MinWidth="360"
+                      Margin="0,8,0,0"
+                      SelectionChanged="EngineSelector_SelectionChanged">
+                <ComboBoxItem Content="Windows — ditado on-line (fala livre)" Tag="WindowsOnlineDictation" />
+                <ComboBoxItem Content="Windows — offline (lista de comandos)" Tag="WindowsOffline" />
+                <ComboBoxItem Content="Whisper — local (fala livre)" Tag="Whisper" />
+            </ComboBox>
+        </StackPanel>
+
+        <!-- ==================== Botão de gravação ==================== -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="12">
+            <Button x:Name="RecordButton"
+                    Click="RecordButton_Click"
+                    Style="{ThemeResource AccentButtonStyle}"
+                    MinWidth="240"
+                    MinHeight="56"
+                    FontSize="16"
+                    CornerRadius="28"
+                    Content="🎙  Iniciar gravação" />
+
+            <!-- Indicador visual de captura ativa. -->
+            <StackPanel x:Name="ListeningIndicator"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="8"
+                        Visibility="Collapsed">
+                <Ellipse x:Name="ListeningDot"
+                         Width="10" Height="10"
+                         VerticalAlignment="Center"
+                         Fill="{StaticResource RecordingBrush}" />
+                <TextBlock Text="Ouvindo..."
+                           VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- ==================== Caixa de transcrição ==================== -->
+        <Border Grid.Row="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Texto consolidado (resultados finais). Somente leitura. -->
+                <TextBox x:Name="TranscriptionTextBox"
+                         Grid.Row="0"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         FontSize="15"
+                         PlaceholderText="O texto reconhecido aparecerá aqui conforme você fala..."
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+                <!-- Hipótese em tempo real (parcial, antes da consolidação). -->
+                <Border Grid.Row="1"
+                        Margin="4,8,4,4"
+                        Padding="8,4"
+                        CornerRadius="4"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                    <TextBlock x:Name="HypothesisTextBlock"
+                               FontStyle="Italic"
+                               TextWrapping="Wrap"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ==================== Barra de status ==================== -->
+        <Border Grid.Row="3"
+                Padding="12,8"
+                CornerRadius="6"
+                Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <TextBlock x:Name="StatusTextBlock"
+                       Text="Pronto."
+                       TextWrapping="Wrap"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Border>
+
+    </Grid>
+</Window>

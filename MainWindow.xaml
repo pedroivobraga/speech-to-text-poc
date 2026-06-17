@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:media="using:Microsoft.UI.Xaml.Media.Animation"
     mc:Ignorable="d"
-    Title="PoC — Reconhecimento de Voz">
+    Title="Speech Recognition PoC">
 
     <Grid x:Name="RootGrid"
           Padding="32"
@@ -36,22 +36,22 @@
 
         <!-- ==================== Cabeçalho ==================== -->
         <StackPanel Grid.Row="0" Spacing="8">
-            <TextBlock Text="Reconhecimento de Voz"
+            <TextBlock Text="Speech Recognition"
                        Style="{ThemeResource TitleLargeTextBlockStyle}" />
-            <TextBlock Text="Transcrição contínua em segundo plano — sem o painel nativo do Windows (Win + H)."
+            <TextBlock Text="Continuous background transcription — without the native Windows panel (Win + H)."
                        Style="{ThemeResource BodyTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        TextWrapping="Wrap" />
 
             <!-- Seletor de motor (trocável em runtime; padrão vem do config.json). -->
             <ComboBox x:Name="EngineSelector"
-                      Header="Motor de reconhecimento"
+                      Header="Recognition engine"
                       MinWidth="360"
                       Margin="0,8,0,0"
                       SelectionChanged="EngineSelector_SelectionChanged">
-                <ComboBoxItem Content="Windows — ditado on-line (fala livre)" Tag="WindowsOnlineDictation" />
-                <ComboBoxItem Content="Windows — offline (lista de comandos)" Tag="WindowsOffline" />
-                <ComboBoxItem Content="Whisper — local (fala livre)" Tag="Whisper" />
+                <ComboBoxItem Content="Windows — online dictation (free-form)" Tag="WindowsOnlineDictation" />
+                <ComboBoxItem Content="Windows — offline (command list)" Tag="WindowsOffline" />
+                <ComboBoxItem Content="Whisper — local (free-form)" Tag="Whisper" />
             </ComboBox>
         </StackPanel>
 
@@ -64,7 +64,7 @@
                     MinHeight="56"
                     FontSize="16"
                     CornerRadius="28"
-                    Content="🎙  Iniciar gravação" />
+                    Content="🎙  Start recording" />
 
             <!-- Indicador visual de captura ativa. -->
             <StackPanel x:Name="ListeningIndicator"
@@ -76,7 +76,7 @@
                          Width="10" Height="10"
                          VerticalAlignment="Center"
                          Fill="{StaticResource RecordingBrush}" />
-                <TextBlock Text="Ouvindo..."
+                <TextBlock Text="Listening..."
                            VerticalAlignment="Center"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
@@ -104,7 +104,7 @@
                          BorderThickness="0"
                          Background="Transparent"
                          FontSize="15"
-                         PlaceholderText="O texto reconhecido aparecerá aqui conforme você fala..."
+                         PlaceholderText="Recognized text will appear here as you speak..."
                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 
@@ -128,7 +128,7 @@
                 CornerRadius="6"
                 Background="{ThemeResource LayerFillColorDefaultBrush}">
             <TextBlock x:Name="StatusTextBlock"
-                       Text="Pronto."
+                       Text="Ready."
                        TextWrapping="Wrap"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </Border>

@@ -38,7 +38,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
 
     public WhisperEngine(WhisperSettings settings) => _settings = settings;
 
-    public string DisplayName => "Whisper — local (fala livre)";
+    public string DisplayName => "Whisper — local (free-form)";
 
     // O Whisper não emite hipóteses parciais; apenas blocos finais.
     public bool SupportsPartialResults => false;
@@ -63,7 +63,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
 
         string modelPath = await EnsureModelAsync();
 
-        Status("Carregando modelo Whisper...");
+        Status("Loading Whisper model...");
         // Carregar o modelo é síncrono e pesado: fora da thread de UI.
         WhisperFactory factory = await Task.Run(() => WhisperFactory.FromPath(modelPath));
         WhisperProcessor processor = factory.CreateBuilder()
@@ -72,7 +72,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
 
         _factory = factory;
         _processor = processor;
-        Status("Whisper pronto.");
+        Status("Whisper ready.");
     }
 
     // -------------------------------------------------------------- captura
@@ -81,7 +81,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
     {
         if (_processor is null)
         {
-            throw new InvalidOperationException("Whisper não inicializado. Chame InitializeAsync primeiro.");
+            throw new InvalidOperationException("Whisper not initialized. Call InitializeAsync first.");
         }
 
         lock (_bufferLock)
@@ -101,7 +101,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
 
         _processingLoop = Task.Run(() => ProcessLoopAsync(_cts.Token));
 
-        Status("Ouvindo (Whisper)...");
+        Status("Listening (Whisper)...");
         return Task.CompletedTask;
     }
 
@@ -144,11 +144,11 @@ public sealed class WhisperEngine : ISpeechToTextEngine
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, new SttErrorEventArgs($"Falha ao finalizar a transcrição: {ex.Message}", ex));
+                ErrorOccurred?.Invoke(this, new SttErrorEventArgs($"Failed to finalize transcription: {ex.Message}", ex));
             }
         }
 
-        Status("Parado.");
+        Status("Stopped.");
         Stopped?.Invoke(this, EventArgs.Empty);
     }
 
@@ -199,7 +199,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
         }
         catch (Exception ex)
         {
-            ErrorOccurred?.Invoke(this, new SttErrorEventArgs($"Erro no Whisper: {ex.Message}", ex));
+            ErrorOccurred?.Invoke(this, new SttErrorEventArgs($"Whisper error: {ex.Message}", ex));
         }
     }
 
@@ -210,7 +210,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
             return;
         }
 
-        Status("Transcrevendo (Whisper)...");
+        Status("Transcribing (Whisper)...");
         var builder = new StringBuilder();
         await foreach (SegmentData segment in _processor.ProcessAsync(samples, token))
         {
@@ -251,13 +251,13 @@ public sealed class WhisperEngine : ISpeechToTextEngine
         if (!_settings.AutoDownloadModel)
         {
             throw new FileNotFoundException(
-                $"Modelo Whisper não encontrado: {modelFile}. Baixe 'ggml-{ggml}.bin' " +
-                "manualmente ou habilite 'autoDownloadModel' no config.json.");
+                $"Whisper model not found: {modelFile}. Download 'ggml-{ggml}.bin' " +
+                "manually or enable 'autoDownloadModel' in config.json.");
         }
 
         // 3) Download (1ª vez requer internet).
         string url = $"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-{ggml}.bin";
-        Status($"Baixando modelo Whisper '{ggml}' (pode demorar na 1ª vez)...");
+        Status($"Downloading Whisper model '{ggml}' (may take a while on first run)...");
 
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(30) };
         using HttpResponseMessage response =
@@ -272,7 +272,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
         }
         File.Move(tempFile, modelFile, overwrite: true);
 
-        Status("Modelo Whisper baixado.");
+        Status("Whisper model downloaded.");
         return modelFile;
     }
 

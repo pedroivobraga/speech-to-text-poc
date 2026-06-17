@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
 
         SelectEngineInCombo(_selectedKind);
         UpdateUiForIdleState();
-        SetStatus("Pronto.");
+        SetStatus("Ready.");
     }
 
     // =====================================================================
@@ -72,7 +72,7 @@ public sealed partial class MainWindow : Window
         _selectedKind = kind;
         // Status é definido de forma síncrona (antes do await) para não competir
         // com o "Pronto." inicial definido no construtor.
-        SetStatus($"Motor selecionado: {tag}.");
+        SetStatus($"Engine selected: {tag}.");
 
         // Trocar de motor exige recriar a instância — descarta a atual (ociosa).
         await DisposeEngineAsync();
@@ -126,11 +126,11 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            SetStatus("Preparando o motor...");
+            SetStatus("Preparing the engine...");
 
             if (!await SttErrors.IsMicrophonePresentAsync())
             {
-                SetStatus("Nenhum microfone foi detectado. Conecte um dispositivo de captura e tente novamente.");
+                SetStatus("No microphone detected. Connect a capture device and try again.");
                 return;
             }
 
@@ -167,9 +167,9 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            SetStatus("Finalizando...");
+            SetStatus("Finishing...");
             await _engine.StopAsync();
-            SetStatus("Pronto.");
+            SetStatus("Ready.");
         }
         catch (Exception ex)
         {
@@ -261,12 +261,12 @@ public sealed partial class MainWindow : Window
 
     private void UpdateUiForListeningState()
     {
-        RecordButton.Content = "■  Parar";
+        RecordButton.Content = "■  Stop";
         RecordButton.Background = (Brush)RootGrid.Resources["RecordingBrush"];
         ListeningIndicator.Visibility = Visibility.Visible;
         EngineSelector.IsEnabled = false;
         StartPulse();
-        SetStatus("Ouvindo...");
+        SetStatus("Listening...");
     }
 
     private void UpdateUiForIdleState()
@@ -274,7 +274,7 @@ public sealed partial class MainWindow : Window
         // Apenas restaura os controles visuais. NÃO altera o status, para preservar
         // a mensagem de erro/motivo definida por quem chamou (ex.: falha ao iniciar
         // ou "Reconhecimento interrompido: ..." vindo do motor).
-        RecordButton.Content = "🎙  Iniciar gravação";
+        RecordButton.Content = "🎙  Start recording";
         RecordButton.ClearValue(Control.BackgroundProperty);
         ListeningIndicator.Visibility = Visibility.Collapsed;
         EngineSelector.IsEnabled = true;

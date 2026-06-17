@@ -15,14 +15,14 @@ public static class SttErrors
     public static string Describe(Exception ex) => ex.HResult switch
     {
         HResultPrivacyStatementDeclined =>
-            "O \"Reconhecimento de fala on-line\" está desativado. Ative em " +
-            "Configurações > Privacidade e segurança > Fala — ou use um motor offline.",
+            "\"Online speech recognition\" is turned off. Turn it on in " +
+            "Settings > Privacy & security > Speech — or use an offline engine.",
 
         HResultAccessDenied =>
-            "Acesso ao microfone negado. Permita o microfone para aplicativos da área " +
-            "de trabalho em Configurações > Privacidade e segurança > Microfone.",
+            "Microphone access denied. Allow the microphone for desktop apps in " +
+            "Settings > Privacy & security > Microphone.",
 
-        _ => $"Falha no reconhecimento de fala: {ex.Message}"
+        _ => $"Speech recognition failed: {ex.Message}"
     };
 
     /// <summary>Verifica se há ao menos um dispositivo de captura de áudio.</summary>

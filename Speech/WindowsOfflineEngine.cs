@@ -20,7 +20,7 @@ public sealed class WindowsOfflineEngine : WindowsSpeechEngineBase
                     ?? new List<string>();
     }
 
-    public override string DisplayName => "Windows — offline (lista de comandos)";
+    public override string DisplayName => "Windows — offline (command list)";
 
     // Lista de comandos não gera hipóteses; só resultados finais.
     public override bool SupportsPartialResults => false;

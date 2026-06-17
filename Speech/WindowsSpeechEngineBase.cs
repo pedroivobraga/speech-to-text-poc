@@ -145,11 +145,11 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
     {
         string? message = args.State switch
         {
-            SpeechRecognizerState.Capturing => "Ouvindo...",
-            SpeechRecognizerState.SoundStarted => "Som detectado...",
-            SpeechRecognizerState.SpeechDetected => "Fala detectada...",
-            SpeechRecognizerState.Processing => "Processando fala...",
-            SpeechRecognizerState.Paused => "Pausado.",
+            SpeechRecognizerState.Capturing => "Listening...",
+            SpeechRecognizerState.SoundStarted => "Sound detected...",
+            SpeechRecognizerState.SpeechDetected => "Speech detected...",
+            SpeechRecognizerState.Processing => "Processing speech...",
+            SpeechRecognizerState.Paused => "Paused.",
             _ => null
         };
 
@@ -183,7 +183,7 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
 
             try
             {
-                StatusChanged?.Invoke(this, new SttStatusEventArgs("Pausa detectada — continuo ouvindo..."));
+                StatusChanged?.Invoke(this, new SttStatusEventArgs("Pause detected — still listening..."));
                 await _recognizer.ContinuousRecognitionSession.StartAsync();
                 return;
             }
@@ -194,7 +194,7 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
         }
         else if (args.Status != SpeechRecognitionResultStatus.Success)
         {
-            StatusChanged?.Invoke(this, new SttStatusEventArgs($"Reconhecimento interrompido: {args.Status}."));
+            StatusChanged?.Invoke(this, new SttStatusEventArgs($"Recognition interrupted: {args.Status}."));
         }
 
         Stopped?.Invoke(this, EventArgs.Empty);
@@ -206,17 +206,17 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
     private static string DescribeCompilationFailure(SpeechRecognitionResultStatus status) => status switch
     {
         SpeechRecognitionResultStatus.TopicLanguageNotSupported =>
-            "Este idioma não tem suporte a ditado on-line. Ative o \"Reconhecimento de fala " +
-            "on-line\" (Configurações > Privacidade e segurança > Fala) e instale o pacote de " +
-            "fala do idioma — ou use um motor offline/Whisper.",
+            "This language does not support online dictation. Turn on \"Online speech " +
+            "recognition\" (Settings > Privacy & security > Speech) and install the speech " +
+            "language pack — or use an offline/Whisper engine.",
 
         SpeechRecognitionResultStatus.GrammarLanguageMismatch =>
-            "O idioma da gramática não corresponde ao idioma do reconhecedor.",
+            "The grammar language does not match the recognizer language.",
 
         SpeechRecognitionResultStatus.GrammarCompilationFailure =>
-            "Falha ao compilar a gramática de reconhecimento.",
+            "Failed to compile the recognition grammar.",
 
-        _ => $"Falha ao preparar o reconhecedor (status: {status})."
+        _ => $"Failed to prepare the recognizer (status: {status})."
     };
 
     /// <summary>

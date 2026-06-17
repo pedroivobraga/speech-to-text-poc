@@ -13,7 +13,7 @@ public sealed class WindowsDictationEngine : WindowsSpeechEngineBase
     {
     }
 
-    public override string DisplayName => "Windows — ditado on-line (fala livre)";
+    public override string DisplayName => "Windows — online dictation (free-form)";
 
     public override bool SupportsPartialResults => true;
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -50,6 +51,7 @@ public sealed class WhisperEngine : ISpeechToTextEngine
     public event EventHandler<SttTextEventArgs>? FinalRecognized;
     public event EventHandler<SttStatusEventArgs>? StatusChanged;
     public event EventHandler<SttErrorEventArgs>? ErrorOccurred;
+    public event EventHandler<SttStatusEventArgs>? Diagnostic;
     public event EventHandler? Stopped;
 
     // ----------------------------------------------------------- inicialização
@@ -64,14 +66,19 @@ public sealed class WhisperEngine : ISpeechToTextEngine
         string modelPath = await EnsureModelAsync();
 
         Status("Loading Whisper model...");
+        Diag($"Model: {Path.GetFileName(modelPath)} | language: {_settings.Language} | chunk: {_settings.ChunkSeconds}s");
+
         // Carregar o modelo é síncrono e pesado: fora da thread de UI.
+        var loadWatch = Stopwatch.StartNew();
         WhisperFactory factory = await Task.Run(() => WhisperFactory.FromPath(modelPath));
         WhisperProcessor processor = factory.CreateBuilder()
             .WithLanguage(string.IsNullOrWhiteSpace(_settings.Language) ? "auto" : _settings.Language)
             .Build();
+        loadWatch.Stop();
 
         _factory = factory;
         _processor = processor;
+        Diag($"Model loaded in {loadWatch.Elapsed.TotalSeconds:F1}s.");
         Status("Whisper ready.");
     }
 
@@ -212,10 +219,18 @@ public sealed class WhisperEngine : ISpeechToTextEngine
 
         Status("Transcribing (Whisper)...");
         var builder = new StringBuilder();
+        var watch = Stopwatch.StartNew();
         await foreach (SegmentData segment in _processor.ProcessAsync(samples, token))
         {
             builder.Append(segment.Text);
         }
+        watch.Stop();
+
+        // RTF (real-time factor): tempo de processamento / duração do áudio.
+        // < 1.0 = mais rápido que tempo real; > 1.0 = não acompanha a fala.
+        double audioSeconds = samples.Length / (double)SampleRate;
+        double rtf = audioSeconds > 0 ? watch.Elapsed.TotalSeconds / audioSeconds : 0;
+        Diag($"Chunk {audioSeconds:F1}s transcribed in {watch.ElapsedMilliseconds} ms (RTF {rtf:F2}).");
 
         string text = builder.ToString().Trim();
         if (text.Length > 0)
@@ -264,20 +279,45 @@ public sealed class WhisperEngine : ISpeechToTextEngine
             await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
         response.EnsureSuccessStatusCode();
 
+        long? total = response.Content.Headers.ContentLength;
         string tempFile = modelFile + ".part";
+
         await using (FileStream fs = File.Create(tempFile))
         await using (Stream src = await response.Content.ReadAsStreamAsync())
         {
-            await src.CopyToAsync(fs);
+            var buffer = new byte[81920];
+            long received = 0;
+            int lastReported = -1;
+            int read;
+            while ((read = await src.ReadAsync(buffer)) > 0)
+            {
+                await fs.WriteAsync(buffer.AsMemory(0, read));
+                received += read;
+
+                if (total is > 0)
+                {
+                    int percent = (int)(received * 100 / total.Value);
+                    if (percent != lastReported && percent % 5 == 0) // a cada ~5%
+                    {
+                        lastReported = percent;
+                        Status($"Downloading model '{ggml}': {percent}% " +
+                               $"({received / 1_000_000} / {total.Value / 1_000_000} MB)");
+                    }
+                }
+            }
         }
         File.Move(tempFile, modelFile, overwrite: true);
 
+        Diag($"Model '{ggml}' downloaded ({(total ?? 0) / 1_000_000} MB).");
         Status("Whisper model downloaded.");
         return modelFile;
     }
 
     private void Status(string message) =>
         StatusChanged?.Invoke(this, new SttStatusEventArgs(message));
+
+    private void Diag(string message) =>
+        Diagnostic?.Invoke(this, new SttStatusEventArgs(message));
 
     // ------------------------------------------------------------- teardown
 

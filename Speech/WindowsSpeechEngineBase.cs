@@ -32,6 +32,7 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
     public event EventHandler<SttTextEventArgs>? FinalRecognized;
     public event EventHandler<SttStatusEventArgs>? StatusChanged;
     public event EventHandler<SttErrorEventArgs>? ErrorOccurred;
+    public event EventHandler<SttStatusEventArgs>? Diagnostic;
     public event EventHandler? Stopped;
 
     public async Task InitializeAsync()
@@ -121,6 +122,9 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
         SpeechContinuousRecognitionSession sender,
         SpeechContinuousRecognitionResultGeneratedEventArgs args)
     {
+        Diagnostic?.Invoke(this, new SttStatusEventArgs(
+            $"Result [{args.Result.Confidence}]: \"{args.Result.Text}\""));
+
         if (args.Result.Confidence == SpeechRecognitionConfidence.Rejected)
         {
             return;
@@ -163,6 +167,8 @@ public abstract class WindowsSpeechEngineBase : ISpeechToTextEngine
         SpeechContinuousRecognitionSession sender,
         SpeechContinuousRecognitionCompletedEventArgs args)
     {
+        Diagnostic?.Invoke(this, new SttStatusEventArgs($"Session completed: {args.Status}"));
+
         // Parada intencional ou descarte: apenas sinaliza fim.
         if (_stopRequested || _disposed || _recognizer is null)
         {

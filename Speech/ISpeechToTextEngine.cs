@@ -57,6 +57,13 @@ public interface ISpeechToTextEngine : IAsyncDisposable
     /// <summary>Erro tratável, com mensagem pronta para exibição.</summary>
     event EventHandler<SttErrorEventArgs>? ErrorOccurred;
 
+    /// <summary>
+    /// Informação técnica/verbosa para o painel de diagnóstico (ex.: confiança do
+    /// resultado, tempo de transcrição/RTF, progresso de download). Não vai para a
+    /// barra de status.
+    /// </summary>
+    event EventHandler<SttStatusEventArgs>? Diagnostic;
+
     /// <summary>O motor parou por conta própria (fim de sessão ou erro fatal).</summary>
     event EventHandler? Stopped;
 

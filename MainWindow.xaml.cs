@@ -73,6 +73,7 @@ public sealed partial class MainWindow : Window
         // Status é definido de forma síncrona (antes do await) para não competir
         // com o "Pronto." inicial definido no construtor.
         SetStatus($"Engine selected: {tag}.");
+        Log($"Engine selected: {tag}");
 
         // Trocar de motor exige recriar a instância — descarta a atual (ociosa).
         await DisposeEngineAsync();
@@ -127,6 +128,7 @@ public sealed partial class MainWindow : Window
         try
         {
             SetStatus("Preparing the engine...");
+            Log($"▶ Start requested (engine: {_selectedKind})");
 
             if (!await SttErrors.IsMicrophonePresentAsync())
             {
@@ -168,6 +170,7 @@ public sealed partial class MainWindow : Window
         try
         {
             SetStatus("Finishing...");
+            Log("⏹ Stop requested");
             await _engine.StopAsync();
             SetStatus("Ready.");
         }
@@ -215,16 +218,35 @@ public sealed partial class MainWindow : Window
             _dispatcherQueue.TryEnqueue(() => HypothesisTextBlock.Text = a.Text);
 
         engine.FinalRecognized += (_, a) =>
-            _dispatcherQueue.TryEnqueue(() => AppendFinalText(a.Text));
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                AppendFinalText(a.Text);
+                Log($"RESULT: {a.Text}");
+            });
 
         engine.StatusChanged += (_, a) =>
-            _dispatcherQueue.TryEnqueue(() => SetStatus(a.Message));
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                SetStatus(a.Message);
+                Log($"STATUS: {a.Message}");
+            });
 
         engine.ErrorOccurred += (_, a) =>
-            _dispatcherQueue.TryEnqueue(() => SetStatus(a.Message));
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                SetStatus(a.Message);
+                Log($"ERROR: {a.Message}");
+            });
+
+        engine.Diagnostic += (_, a) =>
+            _dispatcherQueue.TryEnqueue(() => Log($"DIAG : {a.Message}"));
 
         engine.Stopped += (_, _) =>
-            _dispatcherQueue.TryEnqueue(OnEngineStopped);
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                Log("Engine stopped.");
+                OnEngineStopped();
+            });
     }
 
     private void OnEngineStopped()
@@ -292,6 +314,51 @@ public sealed partial class MainWindow : Window
     {
         _pulseStoryboard?.Stop();
         ListeningDot.Opacity = 1.0;
+    }
+
+    // =====================================================================
+    //  Diagnóstico
+    // =====================================================================
+
+    /// <summary>Acrescenta uma linha carimbada com horário ao log de diagnóstico.</summary>
+    private void Log(string message)
+    {
+        string line = $"{DateTime.Now:HH:mm:ss.fff}  {message}";
+        DiagnosticLogTextBox.Text = DiagnosticLogTextBox.Text.Length == 0
+            ? line
+            : DiagnosticLogTextBox.Text + Environment.NewLine + line;
+
+        // Rola para o fim.
+        DiagnosticLogTextBox.SelectionStart = DiagnosticLogTextBox.Text.Length;
+        DiagnosticLogTextBox.SelectionLength = 0;
+    }
+
+    private async Task RefreshEnvironmentAsync()
+    {
+        try
+        {
+            EnvironmentTextBox.Text = "Collecting...";
+            EnvironmentTextBox.Text = await EnvironmentReport.BuildAsync(_settings, _selectedKind);
+        }
+        catch (Exception ex)
+        {
+            EnvironmentTextBox.Text = $"Failed to build report: {ex.Message}";
+        }
+    }
+
+    private async void RefreshEnvironment_Click(object sender, RoutedEventArgs e)
+        => await RefreshEnvironmentAsync();
+
+    private void ClearLog_Click(object sender, RoutedEventArgs e)
+        => DiagnosticLogTextBox.Text = string.Empty;
+
+    private async void DiagnosticsExpander_Expanding(Expander sender, ExpanderExpandingEventArgs args)
+    {
+        // Popula o ambiente na primeira expansão (consulta WinRT/dispositivos).
+        if (string.IsNullOrEmpty(EnvironmentTextBox.Text))
+        {
+            await RefreshEnvironmentAsync();
+        }
     }
 
     // =====================================================================
